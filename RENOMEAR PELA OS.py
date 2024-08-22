@@ -52,6 +52,9 @@ def processar_pdfs():
         # Dicionário para armazenar os lotes e seus respectivos PDFs
         lotes = {}
         
+        # Dicionário para armazenar os clientes e seus respectivos lotes
+        clientes = {}
+        
         # Iterar sobre os PDFs na pasta selecionada
         for filename in os.listdir(pasta_pdfs):
             if filename.endswith(".pdf"):
@@ -83,6 +86,20 @@ def processar_pdfs():
                                         new_filename = f"{placa_values[i]} {ait_values[i]} PG.pdf"
                             
                             new_path = os.path.join(pasta_pdfs, new_filename)
+                            
+                            # Verificar se o arquivo de destino já existe
+                            if os.path.exists(new_path):
+                                # Adicionar um sufixo numérico ao nome do arquivo
+                                counter = 1
+                                while True:
+                                    new_filename_with_suffix = f"{os.path.splitext(new_filename)[0]}_{counter}.pdf"
+                                    new_path_with_suffix = os.path.join(pasta_pdfs, new_filename_with_suffix)
+                                    if not os.path.exists(new_path_with_suffix):
+                                        new_filename = new_filename_with_suffix
+                                        new_path = new_path_with_suffix
+                                        break
+                                    counter += 1
+                            
                             os.rename(pdf_path, new_path)
                             print(f"PDF renomeado: {new_filename}")
                             
@@ -93,6 +110,15 @@ def processar_pdfs():
                             if lote_lummon not in lotes:
                                 lotes[lote_lummon] = []
                             lotes[lote_lummon].append(new_filename)
+                            
+                            # Obter o valor do cliente correspondente
+                            cliente = cliente_values[i]
+                            
+                            # Adicionar o lote ao dicionário de clientes
+                            if cliente not in clientes:
+                                clientes[cliente] = []
+                            if lote_lummon not in clientes[cliente]:
+                                clientes[cliente].append(lote_lummon)
                             
                             break
         
@@ -106,6 +132,22 @@ def processar_pdfs():
                 new_path = os.path.join(lote_folder, pdf)
                 os.rename(pdf_path, new_path)
                 print(f"PDF movido para o lote {lote}: {pdf}")
+        
+        # Criar pastas para cada cliente e mover os lotes correspondentes
+        for cliente, lotes_cliente in clientes.items():
+            cliente_folder = os.path.join(pasta_pdfs, str(cliente))
+            os.makedirs(cliente_folder, exist_ok=True)
+            
+            for lote in lotes_cliente:
+                lote_folder = os.path.join(pasta_pdfs, str(lote))
+                new_lote_folder = os.path.join(cliente_folder, str(lote))
+                
+                # Verificar se o lote existe antes de mover
+                if os.path.exists(lote_folder):
+                    os.rename(lote_folder, new_lote_folder)
+                    print(f"Lote {lote} movido para a pasta do cliente {cliente}")
+                else:
+                    print(f"O lote {lote} não foi encontrado para o cliente {cliente}")
         
         # Exibir mensagem de conclusão
         messagebox.showinfo("Processamento Concluído", "O processamento dos PDFs foi concluído com sucesso!")
