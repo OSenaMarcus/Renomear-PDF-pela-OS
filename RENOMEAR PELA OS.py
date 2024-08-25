@@ -38,6 +38,9 @@ def processar_pdfs():
     planilha_excel = selecionar_planilha_excel()
     
     if pasta_pdfs and planilha_excel:
+        print(f"Pasta PDFs selecionada: {pasta_pdfs}")
+        print(f"Planilha Excel selecionada: {planilha_excel}")
+        
         # Carregar a planilha do Excel
         workbook = openpyxl.load_workbook(planilha_excel)
         sheet = workbook.active
