@@ -42,18 +42,14 @@ def processar_pdfs():
         workbook = openpyxl.load_workbook(planilha_excel)
         sheet = workbook.active
         
-        # Obter os valores das colunas OS, placa, ait, lote lummon e cliente
+        # Obter os valores das colunas OS, placa, ait e lote lummon
         os_values = [cell.value for cell in sheet['C'][1:]]
         placa_values = [cell.value for cell in sheet['F'][1:]]
         ait_values = [cell.value for cell in sheet['E'][1:]]
         lote_lummon_values = [cell.value for cell in sheet['D'][1:]]
-        cliente_values = [cell.value for cell in sheet['B'][1:]]
         
         # Dicionário para armazenar os lotes e seus respectivos PDFs
         lotes = {}
-        
-        # Dicionário para armazenar os clientes e seus respectivos lotes
-        clientes = {}
         
         # Iterar sobre os PDFs na pasta selecionada
         for filename in os.listdir(pasta_pdfs):
@@ -67,23 +63,18 @@ def processar_pdfs():
                     # Verificar se o texto do PDF contém algum valor da coluna OS
                     for i, os_value in enumerate(os_values):
                         if str(os_value) in pdf_text:
-                            # Verificar se o valor da coluna CLIENTE é "Kintomobility"
-                            if str(cliente_values[i]) == "Kintomobility":
-                                # Renomear o PDF com o valor da coluna PLACA + AIT + "_C" + "PG"
-                                new_filename = f"{placa_values[i]} {ait_values[i]}_C PG.pdf"
+                            # Verificar se os valores das colunas PLACA e AIT são "-"
+                            if str(placa_values[i]) == "-" and str(ait_values[i]) == "-":
+                                # Renomear o PDF somente com o valor da coluna OS + ' PG'
+                                new_filename = f"{os_value} PG.pdf"
                             else:
-                                # Verificar se os valores das colunas PLACA e AIT são "-"
-                                if str(placa_values[i]) == "-" and str(ait_values[i]) == "-":
-                                    # Renomear o PDF somente com o valor da coluna OS + ' PG'
-                                    new_filename = f"{os_value} PG.pdf"
+                                # Verificar se o valor da coluna AIT é "-"
+                                if str(ait_values[i]) == "-":
+                                    # Renomear o PDF com o valor da coluna OS + coluna placa + 'PG'
+                                    new_filename = f"{os_value} {placa_values[i]} PG.pdf"
                                 else:
-                                    # Verificar se o valor da coluna AIT é "-"
-                                    if str(ait_values[i]) == "-":
-                                        # Renomear o PDF com o valor da coluna OS + coluna placa + 'PG'
-                                        new_filename = f"{os_value} {placa_values[i]} PG.pdf"
-                                    else:
-                                        # Renomear o PDF com o valor da coluna placa + coluna ait + 'PG'
-                                        new_filename = f"{placa_values[i]} {ait_values[i]} PG.pdf"
+                                    # Renomear o PDF com o valor da coluna placa + coluna ait + 'PG'
+                                    new_filename = f"{placa_values[i]} {ait_values[i]} PG.pdf"
                             
                             new_path = os.path.join(pasta_pdfs, new_filename)
                             
@@ -111,15 +102,6 @@ def processar_pdfs():
                                 lotes[lote_lummon] = []
                             lotes[lote_lummon].append(new_filename)
                             
-                            # Obter o valor do cliente correspondente
-                            cliente = cliente_values[i]
-                            
-                            # Adicionar o lote ao dicionário de clientes
-                            if cliente not in clientes:
-                                clientes[cliente] = []
-                            if lote_lummon not in clientes[cliente]:
-                                clientes[cliente].append(lote_lummon)
-                            
                             break
         
         # Criar pastas para cada lote e mover os PDFs correspondentes
@@ -132,22 +114,6 @@ def processar_pdfs():
                 new_path = os.path.join(lote_folder, pdf)
                 os.rename(pdf_path, new_path)
                 print(f"PDF movido para o lote {lote}: {pdf}")
-        
-        # Criar pastas para cada cliente e mover os lotes correspondentes
-        for cliente, lotes_cliente in clientes.items():
-            cliente_folder = os.path.join(pasta_pdfs, str(cliente))
-            os.makedirs(cliente_folder, exist_ok=True)
-            
-            for lote in lotes_cliente:
-                lote_folder = os.path.join(pasta_pdfs, str(lote))
-                new_lote_folder = os.path.join(cliente_folder, str(lote))
-                
-                # Verificar se o lote existe antes de mover
-                if os.path.exists(lote_folder):
-                    os.rename(lote_folder, new_lote_folder)
-                    print(f"Lote {lote} movido para a pasta do cliente {cliente}")
-                else:
-                    print(f"O lote {lote} não foi encontrado para o cliente {cliente}")
         
         # Exibir mensagem de conclusão
         messagebox.showinfo("Processamento Concluído", "O processamento dos PDFs foi concluído com sucesso!")
