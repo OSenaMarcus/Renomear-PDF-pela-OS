@@ -184,3 +184,4 @@ footer_label.pack(side="right", padx=10, pady=5)
 
 # Iniciar o loop principal da janela
 window.mainloop()
+#
